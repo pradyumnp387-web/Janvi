@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Series": {
+      "title": "Series",
+      "description": "A content series generated from a prompt",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "prompt": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "totalParts": { "type": "number" },
+        "status": { "type": "string", "enum": ["generating", "active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "prompt", "status"]
+    },
+    "ContentPart": {
+      "title": "ContentPart",
+      "description": "A single day's content in a series",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "seriesId": { "type": "string" },
+        "userId": { "type": "string" },
+        "partNumber": { "type": "number" },
+        "scheduledDate": { "type": "string", "format": "date" },
+        "script": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "posted"] },
+        "caption": { "type": "string" },
+        "hashtags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["seriesId", "userId", "partNumber", "scheduledDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/series/{seriesId}": {
+      "schema": "Series",
+      "description": "Content series"
+    },
+    "/series/{seriesId}/parts/{partId}": {
+      "schema": "ContentPart",
+      "description": "Individual parts of a series"
+    }
+  }
+}

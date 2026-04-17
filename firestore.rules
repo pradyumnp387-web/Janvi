@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: series
+    // Document ID: {seriesId}
+    // Fields:
+    //   - userId: string (required)
+    //   - prompt: string (required)
+    //   - title: string (optional)
+    //   - description: string (optional)
+    //   - totalParts: number (optional)
+    //   - status: string (required, ['generating', 'active', 'completed'])
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: series/{seriesId}/parts
+    // Document ID: {partId}
+    // Fields:
+    //   - seriesId: string (required)
+    //   - userId: string (required)
+    //   - partNumber: number (required)
+    //   - scheduledDate: string (required, ISO 8601)
+    //   - script: string (optional)
+    //   - imageUrl: string (optional)
+    //   - status: string (required, ['draft', 'scheduled', 'posted'])
+    //   - caption: string (optional)
+    //   - hashtags: list (optional)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidSeries(data) {
+      return data.keys().hasAll(['userId', 'prompt', 'status', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.prompt is string && data.prompt.size() < 1000 &&
+             data.status in ['generating', 'active', 'completed'];
+    }
+
+    function isValidPart(data) {
+      return data.keys().hasAll(['seriesId', 'userId', 'partNumber', 'scheduledDate', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.partNumber is number &&
+             data.status in ['draft', 'scheduled', 'posted'];
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /series/{seriesId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidSeries(request.resource.data);
+      allow update: if isDocOwner() && isValidSeries(request.resource.data);
+      allow delete: if isDocOwner();
+
+      match /parts/{partId} {
+        allow read: if isDocOwner();
+        allow create: if isAuthenticated() && isValidPart(request.resource.data);
+        allow update: if isDocOwner() && isValidPart(request.resource.data);
+        allow delete: if isDocOwner();
+      }
+    }
+  }
+}

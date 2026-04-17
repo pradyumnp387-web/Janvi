@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Helvetica Neue", Arial, sans-serif;
+  --color-bg: #000000;
+  --color-sidebar: #0a0a0a;
+  --color-primary: #ec4899;
+  --color-secondary: #8b5cf6;
+  --color-accent: #06b6d4;
+  --color-text-main: #ffffff;
+  --color-text-muted: #94a3b8;
+  --color-card-bg: #111111;
+  --color-border: #222222;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-text-main font-sans;
+  }
+}
+
+.card {
+  @apply bg-card-bg rounded-[24px] p-6 border border-border shadow-sm;
+}
+
+.btn-primary {
+  @apply bg-linear-to-r from-primary to-secondary text-white font-bold py-4 px-6 rounded-[16px] transition-all hover:opacity-90;
+}
+
+.input-box {
+  @apply bg-[#f8fafc] border-2 border-border rounded-[16px] p-4 text-text-main focus:outline-none focus:border-primary/30;
+}
